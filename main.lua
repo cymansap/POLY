@@ -29,6 +29,11 @@ function love.load()
     sndSwitch = love.audio.newSource("res/switch.wav", "static")
     sndJump = love.audio.newSource("res/jump.wav", "static")
     sndSlide = love.audio.newSource("res/slide.wav", "static")
+    sndDeath = love.audio.newSource("res/death.ogg", "static")
+    sndScore = {
+        love.audio.newSource("res/score1.ogg", "static"),
+        love.audio.newSource("res/score2.ogg", "static")
+    }
 
     poly = {}
 
@@ -75,12 +80,24 @@ function love.update(dt)
     for i,p in ipairs(pillars) do
         p.x = p.x - PILLAR_SPEED*dt
         if not p.timeScored and p.x <= poly.x then
-            p.timeScored = time
-            love.timer.sleep(PAUSE)
+            if p.state == poly.state and ( ( p.height==1 and poly.grounded ) or ( p.height==2 and not poly.grounded) ) then
+                p.timeScored = time
+                love.timer.sleep(PAUSE)
+                sndScore[p.height]:play()
+            else
+                gameState = 'over'
+                deathPillar = p
+                p.timeScored = time
+                love.timer.sleep(0.2)
+                sndDeath:play()
+            end
         end
         if p.x < -SIZE-PILLAR_SPACE then remove = i end
     end
     if remove then table.remove(pillars, remove) end
+    if deathPillar then
+        poly.x = deathPillar.x
+    end
 
     psys:update(dt)
 end
@@ -129,10 +146,13 @@ function start()
     poly.grounded = true
     poly.rot = 0
     poly.rotv = 0
+    psys:start()
 
     time = 0
     timeNextPillar = time + PILLAR_INTERVAL
     gameState = 'main'
+    score = 0
+    deathPillar = false
 
     pillars = {}
 end
@@ -160,7 +180,7 @@ function setState(state)
 end
 
 function jump()
-    if poly.grounded then
+    if poly.grounded and not deathPillar then
         if #pillars == 0 then
             poly.ya = GRAVITY
         else
