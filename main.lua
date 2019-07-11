@@ -19,6 +19,10 @@ function love.load()
     JUMP_HEIGHT = WINDOW_H * 0.5
     JUMP_VEL = math.sqrt(2*GRAVITY*JUMP_HEIGHT)
 
+    sndSwitch = love.audio.newSource("res/switch.wav", "static")
+    sndJump = love.audio.newSource("res/jump.wav", "static")
+    sndSlide = love.audio.newSource("res/slide.wav", "static")
+
     poly = {}
 
     start()
@@ -32,6 +36,7 @@ function love.update(dt)
         if poly.y > GROUND_H then
             poly.y = GROUND_H
             poly.grounded = true
+            sndSlide:play()
         end
     end
 end
@@ -65,11 +70,16 @@ end
 
 function setState(state)
     poly.state = state
+    sndSwitch:stop()
+    sndSwitch:play()
 end
 
 function jump()
     if poly.grounded then
         poly.yv = -JUMP_VEL
         poly.grounded = false
+        sndJump:stop()
+        sndSlide:stop()
+        sndJump:play()
     end
 end
