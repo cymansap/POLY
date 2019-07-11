@@ -2,11 +2,12 @@
 local ceil = math.ceil
 
 function love.load()
-    love.graphics.setLineWidth(2)
+    local LINE_WIDTH = 2
+    love.graphics.setLineWidth(LINE_WIDTH)
 
     WINDOW_W, WINDOW_H = love.graphics.getDimensions()
     GROUND_H = WINDOW_H * 0.8
-    SIZE = WINDOW_W * 0.08
+    SIZE = WINDOW_H * 0.12
     SHAPES = {
         { 0,0, 0,-SIZE, SIZE,-SIZE, SIZE,0 },
         { 0,0, SIZE/2,-SIZE, SIZE,0 },
@@ -30,6 +31,20 @@ function love.load()
 
     poly = {}
 
+    local imgParticle = love.graphics.newCanvas(LINE_WIDTH, LINE_WIDTH)
+    love.graphics.setCanvas(imgParticle)
+    love.graphics.clear(1,1,1)
+    love.graphics.setCanvas()
+    psys = love.graphics.newParticleSystem(imgParticle, 64)
+    psys:setEmissionArea('uniform', SIZE*0.3,0)
+    local spread = 0.5
+    psys:setDirection(math.pi + spread/2)
+    psys:setSpread(spread) -- 1 radian
+    psys:setSpeed(PILLAR_SPEED*0.4,PILLAR_SPEED*0.6)
+    psys:setEmissionRate(64)
+    psys:setParticleLifetime(0.4,0.6)
+    psys:setColors(1,1,1,1, 1,1,1,0)
+
     start()
 end
 
@@ -42,6 +57,8 @@ function love.update(dt)
         if poly.y > GROUND_H then
             poly.y = GROUND_H
             poly.grounded = true
+            psys:start()
+            psys:emit(32)
             sndSlide:play()
         end
     end
@@ -55,6 +72,8 @@ function love.update(dt)
         if p.x < -SIZE-PILLAR_SPACE then remove = i end
     end
     if remove then table.remove(pillars, remove) end
+
+    psys:update(dt)
 end
 
 function love.draw()
@@ -66,6 +85,8 @@ function love.draw()
     love.graphics.translate(poly.x, poly.y)
     love.graphics.polygon("line", SHAPES[poly.state])
     love.graphics.pop()
+
+    love.graphics.draw(psys, poly.x+SIZE/2,GROUND_H)
 
     for i,p in ipairs(pillars) do
         local front_end = p.x-PILLAR_SPACE
@@ -116,15 +137,20 @@ function newPillar()
 end
 
 function setState(state)
-    poly.state = state
-    sndSwitch:stop()
-    sndSwitch:play()
+    local previous = poly.state
+    if state ~= previous then
+        poly.state = state
+        sndSwitch:stop()
+        sndSwitch:play()
+    end
 end
 
 function jump()
     if poly.grounded then
         poly.yv = -JUMP_VEL
         poly.grounded = false
+        psys:emit(32)
+        psys:stop()
         sndJump:stop()
         sndSlide:stop()
         sndJump:play()
