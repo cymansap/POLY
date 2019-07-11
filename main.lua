@@ -18,11 +18,12 @@ function love.load()
         {0,1,0, 1},
         {1,0,1, 1}
     }
+    PAUSE = 0.1
     GRAVITY = WINDOW_H * 8
     JUMP_HEIGHT = WINDOW_H * 0.5
     JUMP_VEL = math.sqrt(2*GRAVITY*JUMP_HEIGHT)
     PILLAR_SPACE = SIZE*0.25
-    PILLAR_SPEED = (WINDOW_W+SIZE)-WINDOW_W*0.17
+    PILLAR_SPEED = ( (WINDOW_W+SIZE)-WINDOW_W*0.17 ) / (1-PAUSE)
     PILLAR_INTERVAL = 1 -- seconds
 
     sndSwitch = love.audio.newSource("res/switch.wav", "static")
@@ -49,14 +50,18 @@ function love.load()
 end
 
 function love.update(dt)
+    if dt>PAUSE then dt = 0 end
+    --dt = dt*0.5
     time = time + dt
     if not poly.grounded then
-        poly.yv = poly.yv + GRAVITY*dt/2
+        poly.yv = poly.yv + poly.ya*dt/2
         poly.y = poly.y + poly.yv*dt
-        poly.yv = poly.yv + GRAVITY*dt/2
+        poly.yv = poly.yv + poly.ya*dt/2
+        poly.rot = poly.rot + poly.rotv*dt
         if poly.y > GROUND_H then
             poly.y = GROUND_H
             poly.grounded = true
+            poly.rot = 0
             psys:start()
             psys:emit(32)
             sndSlide:play()
@@ -69,6 +74,10 @@ function love.update(dt)
     local remove
     for i,p in ipairs(pillars) do
         p.x = p.x - PILLAR_SPEED*dt
+        if not p.timeScored and p.x <= poly.x then
+            p.timeScored = time
+            love.timer.sleep(PAUSE)
+        end
         if p.x < -SIZE-PILLAR_SPACE then remove = i end
     end
     if remove then table.remove(pillars, remove) end
@@ -82,7 +91,9 @@ function love.draw()
 
     love.graphics.setColor(COLORS[poly.state])
     love.graphics.push()
-    love.graphics.translate(poly.x, poly.y)
+    love.graphics.translate(poly.x+SIZE/2, poly.y-SIZE/2)
+    love.graphics.rotate(poly.rot)
+    love.graphics.translate(-SIZE/2, SIZE/2)
     love.graphics.polygon("line", SHAPES[poly.state])
     love.graphics.pop()
 
@@ -106,6 +117,7 @@ function love.keypressed(key)
     elseif key=='s' then setState(1)
     elseif key=='d' then setState(2)
     elseif key=='f' then setState(3)
+    elseif key=='r' then start()
     end
 end
 
@@ -115,6 +127,8 @@ function start()
     poly.y = GROUND_H
     poly.yv = 0
     poly.grounded = true
+    poly.rot = 0
+    poly.rotv = 0
 
     time = 0
     timeNextPillar = time + PILLAR_INTERVAL
@@ -147,6 +161,14 @@ end
 
 function jump()
     if poly.grounded then
+        if #pillars == 0 then
+            poly.ya = GRAVITY
+        else
+            local p = pillars[1].x < poly.x and pillars[2] or pillars[1]
+            local t = (p.x-poly.x)/PILLAR_SPEED
+            poly.ya = (-2*(JUMP_HEIGHT-JUMP_VEL*t))/t^2
+            poly.rotv = p.state==2 and math.pi*2/t or math.pi/t
+        end
         poly.yv = -JUMP_VEL
         poly.grounded = false
         psys:emit(32)
