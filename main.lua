@@ -1,5 +1,6 @@
 
 local ceil = math.ceil
+local font = require "font"
 
 function love.load()
     local LINE_WIDTH = 2
@@ -23,8 +24,11 @@ function love.load()
     JUMP_HEIGHT = WINDOW_H * 0.5
     JUMP_VEL = math.sqrt(2*GRAVITY*JUMP_HEIGHT)
     PILLAR_SPACE = SIZE*0.25
-    PILLAR_SPEED = ( (WINDOW_W+SIZE)-WINDOW_W*0.17 ) / (1-PAUSE)
+    PILLAR_SPEED = ( (WINDOW_W+SIZE+PILLAR_SPACE)-WINDOW_W*0.17 ) / (1-PAUSE)
     PILLAR_INTERVAL = 1 -- seconds
+    FONTSIZE = WINDOW_H * 0.02
+    SCORE_X = WINDOW_W - FONTSIZE*2.5*3
+    SCORE_Y = WINDOW_H * 0.82
 
     sndSwitch = love.audio.newSource("res/switch.wav", "static")
     sndJump = love.audio.newSource("res/jump.wav", "static")
@@ -56,7 +60,6 @@ end
 
 function love.update(dt)
     if dt>PAUSE then dt = 0 end
-    --dt = dt*0.5
     time = time + dt
     if not poly.grounded then
         poly.yv = poly.yv + poly.ya*dt/2
@@ -79,10 +82,11 @@ function love.update(dt)
     local remove
     for i,p in ipairs(pillars) do
         p.x = p.x - PILLAR_SPEED*dt
-        if not p.timeScored and p.x <= poly.x then
+        if not deathPillar and not p.timeScored and p.x <= poly.x then
             if p.state == poly.state and ( ( p.height==1 and poly.grounded ) or ( p.height==2 and not poly.grounded) ) then
                 p.timeScored = time
                 love.timer.sleep(PAUSE)
+                score = score + 1
                 sndScore[p.height]:play()
             else
                 gameState = 'over'
@@ -116,6 +120,8 @@ function love.draw()
 
     love.graphics.draw(psys, poly.x+SIZE/2,GROUND_H)
 
+    printFont(""..score, SCORE_X, SCORE_Y)
+
     for i,p in ipairs(pillars) do
         local front_end = p.x-PILLAR_SPACE
         local back_end = p.x+SIZE+PILLAR_SPACE
@@ -130,11 +136,15 @@ function love.draw()
 end
 
 function love.keypressed(key)
-    if key=='space' then jump()
-    elseif key=='s' then setState(1)
-    elseif key=='d' then setState(2)
-    elseif key=='f' then setState(3)
-    elseif key=='r' then start()
+    if gameState == 'main' then
+        if key=='space' then jump()
+        elseif key=='s' then setState(1)
+        elseif key=='d' then setState(2)
+        elseif key=='f' then setState(3)
+        end
+    end
+    if key=='r' then start()
+    elseif key=='escape' then love.event.quit()
     end
 end
 
@@ -180,7 +190,7 @@ function setState(state)
 end
 
 function jump()
-    if poly.grounded and not deathPillar then
+    if poly.grounded then
         if #pillars == 0 then
             poly.ya = GRAVITY
         else
@@ -197,4 +207,27 @@ function jump()
         sndSlide:stop()
         sndJump:play()
     end
+end
+
+function printFont(text, x,y, size)
+    local size = size or FONTSIZE
+    love.graphics.push()
+    love.graphics.translate(x,y)
+    for c in text:gmatch('.') do
+        if c ~= ' ' then
+            for _,t in ipairs(font[c]) do
+                love.graphics.line( resize(t, size) )
+            end
+        end
+        love.graphics.translate(FONTSIZE*2.5,0)
+    end
+    love.graphics.pop()
+end
+
+function resize(t, size)
+    local new = {}
+    for i=1,#t do
+        new[i] = t[i]*size
+    end
+    return new
 end
