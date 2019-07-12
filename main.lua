@@ -19,18 +19,19 @@ function love.load()
         {0,1,0, 1},
         {1,0,1, 1}
     }
-    PAUSE = 0.1
-    GRAVITY = WINDOW_H * 8
+    PAUSE = 0.15
+    GRAVITY = WINDOW_H * 10
     JUMP_HEIGHT = WINDOW_H * 0.5
     JUMP_VEL = math.sqrt(2*GRAVITY*JUMP_HEIGHT)
     PILLAR_SPACE = SIZE*0.25
-    PILLAR_SPEED = ( (WINDOW_W+SIZE+PILLAR_SPACE)-WINDOW_W*0.17 ) / (1-PAUSE)
+    PILLAR_SPEED = ( (WINDOW_W+SIZE+PILLAR_SPACE)-WINDOW_W*0.17 ) / (1-PAUSE) / 1.5
     PILLAR_INTERVAL = 1 -- seconds
     FONTSIZE = WINDOW_H * 0.02
     SCORE_X = WINDOW_W - FONTSIZE*2.5*3
     SCORE_Y = WINDOW_H * 0.82
     HISCORE_X = SCORE_X - FONTSIZE*7.5
     HISCORE_Y = SCORE_Y + FONTSIZE*3.5
+    TIME_MULTIPLIER = 1
 
     sndSwitch = love.audio.newSource("res/switch.wav", "static")
     sndJump = love.audio.newSource("res/jump.wav", "static")
@@ -68,7 +69,8 @@ function love.load()
 end
 
 function love.update(dt)
-    if dt>PAUSE then dt = 0 end
+    if dt>real_pause then dt = 0 end
+    dt = dt*TIME_MULTIPLIER
     time = time + dt
     if not poly.grounded then
         poly.yv = poly.yv + poly.ya*dt/2
@@ -94,7 +96,7 @@ function love.update(dt)
         if not deathPillar and not p.timeScored and p.x <= poly.x then
             if p.state == poly.state and ( ( p.height==1 and poly.grounded ) or ( p.height==2 and not poly.grounded) ) then
                 p.timeScored = time
-                love.timer.sleep(PAUSE)
+                love.timer.sleep(real_pause)
                 score = score + 1
                 if score > hi_score then
                     hi_score = score
@@ -108,7 +110,7 @@ function love.update(dt)
                 if new_hi_score then
                     love.filesystem.write("polydata.lua", "hi_score="..hi_score)
                 end
-                love.timer.sleep(0.2)
+                love.timer.sleep(real_pause*2)
                 sndDeath:play()
             end
         end
@@ -181,6 +183,7 @@ function start()
     gameState = 'main'
     score = 0
     deathPillar = false
+    real_pause = PAUSE/TIME_MULTIPLIER
 
     new_hi_score = false
 
