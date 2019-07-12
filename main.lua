@@ -29,6 +29,8 @@ function love.load()
     FONTSIZE = WINDOW_H * 0.02
     SCORE_X = WINDOW_W - FONTSIZE*2.5*3
     SCORE_Y = WINDOW_H * 0.82
+    HISCORE_X = SCORE_X - FONTSIZE*7.5
+    HISCORE_Y = SCORE_Y + FONTSIZE*3.5
 
     sndSwitch = love.audio.newSource("res/switch.wav", "static")
     sndJump = love.audio.newSource("res/jump.wav", "static")
@@ -54,6 +56,13 @@ function love.load()
     psys:setEmissionRate(64)
     psys:setParticleLifetime(0.4,0.6)
     psys:setColors(1,1,1,1, 1,1,1,0)
+
+    hi_score = 0
+    local info = love.filesystem.getInfo("polydata.lua")
+    if info then
+        local func, err = love.filesystem.load("polydata.lua")
+        if not err then func() end
+    end
 
     start()
 end
@@ -87,11 +96,18 @@ function love.update(dt)
                 p.timeScored = time
                 love.timer.sleep(PAUSE)
                 score = score + 1
+                if score > hi_score then
+                    hi_score = score
+                    new_hi_score = true
+                end
                 sndScore[p.height]:play()
             else
                 gameState = 'over'
                 deathPillar = p
                 p.timeScored = time
+                if new_hi_score then
+                    love.filesystem.write("polydata.lua", "hi_score="..hi_score)
+                end
                 love.timer.sleep(0.2)
                 sndDeath:play()
             end
@@ -121,6 +137,8 @@ function love.draw()
     love.graphics.draw(psys, poly.x+SIZE/2,GROUND_H)
 
     printFont(""..score, SCORE_X, SCORE_Y)
+    love.graphics.setColor(1, 1, 1)
+    printFont("hi "..hi_score, HISCORE_X, HISCORE_Y)
 
     for i,p in ipairs(pillars) do
         local front_end = p.x-PILLAR_SPACE
@@ -163,6 +181,8 @@ function start()
     gameState = 'main'
     score = 0
     deathPillar = false
+
+    new_hi_score = false
 
     pillars = {}
 end
