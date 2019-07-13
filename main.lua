@@ -23,15 +23,16 @@ function love.load()
     GRAVITY = WINDOW_H * 10
     JUMP_HEIGHT = WINDOW_H * 0.5
     JUMP_VEL = math.sqrt(2*GRAVITY*JUMP_HEIGHT)
+    POLY_X = WINDOW_W * 0.2
     PILLAR_SPACE = SIZE*0.25
-    PILLAR_SPEED = ( (WINDOW_W+SIZE+PILLAR_SPACE)-WINDOW_W*0.17 )
+    PILLAR_SPEED = ( (WINDOW_W+SIZE+PILLAR_SPACE)-POLY_X )
     PILLAR_INTERVAL = 1 -- seconds
     FONTSIZE = WINDOW_H * 0.02
     SCORE_X = WINDOW_W - FONTSIZE*2.5*3
     SCORE_Y = WINDOW_H * 0.82
     HISCORE_X = SCORE_X - FONTSIZE*7.5
     HISCORE_Y = SCORE_Y + FONTSIZE*3.5
-    TIME_MULTIPLIER = 0.5
+    TIME_MULTIPLIER = 1
     TRI_CENTER = 2/3
     SCORE_EFFECT_VEL = 12
     SCORE_EFFECT_ACCEL = 32
@@ -192,7 +193,7 @@ end
 
 function start()
     poly.state = 1
-    poly.x = WINDOW_W * 0.17
+    poly.x = POLY_X
     poly.y = GROUND_H
     poly.yv = 0
     poly.grounded = true
