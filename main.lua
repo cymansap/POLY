@@ -24,7 +24,7 @@ function love.load()
     JUMP_HEIGHT = WINDOW_H * 0.5
     JUMP_VEL = math.sqrt(2*GRAVITY*JUMP_HEIGHT)
     PILLAR_SPACE = SIZE*0.25
-    PILLAR_SPEED = ( (WINDOW_W+SIZE+PILLAR_SPACE)-WINDOW_W*0.17 ) / (1-PAUSE) / 1.5
+    PILLAR_SPEED = ( (WINDOW_W+SIZE+PILLAR_SPACE)-WINDOW_W*0.17 )
     PILLAR_INTERVAL = 1 -- seconds
     FONTSIZE = WINDOW_H * 0.02
     SCORE_X = WINDOW_W - FONTSIZE*2.5*3
@@ -69,56 +69,57 @@ function love.load()
 end
 
 function love.update(dt)
-    if dt>real_pause then dt = 0 end
     dt = dt*TIME_MULTIPLIER
     time = time + dt
-    if not poly.grounded then
-        poly.yv = poly.yv + poly.ya*dt/2
-        poly.y = poly.y + poly.yv*dt
-        poly.yv = poly.yv + poly.ya*dt/2
-        poly.rot = poly.rot + poly.rotv*dt
-        if poly.y > GROUND_H then
-            poly.y = GROUND_H
-            poly.grounded = true
-            poly.rot = 0
-            psys:start()
-            psys:emit(32)
-            sndSlide:play()
-        end
-    end
-    if time >= timeNextPillar then
-        timeNextPillar = timeNextPillar + PILLAR_INTERVAL
-        newPillar()
-    end
-    local remove
-    for i,p in ipairs(pillars) do
-        p.x = p.x - PILLAR_SPEED*dt
-        if not deathPillar and not p.timeScored and p.x <= poly.x then
-            if p.state == poly.state and ( ( p.height==1 and poly.grounded ) or ( p.height==2 and not poly.grounded) ) then
-                p.timeScored = time
-                love.timer.sleep(real_pause)
-                score = score + 1
-                if score > hi_score then
-                    hi_score = score
-                    new_hi_score = true
-                end
-                sndScore[p.height]:play()
-            else
-                gameState = 'over'
-                deathPillar = p
-                p.timeScored = time
-                if new_hi_score then
-                    love.filesystem.write("polydata.lua", "hi_score="..hi_score)
-                end
-                love.timer.sleep(real_pause*2)
-                sndDeath:play()
+    if time_pause_done <= time then
+        if not poly.grounded then
+            poly.yv = poly.yv + poly.ya*dt/2
+            poly.y = poly.y + poly.yv*dt
+            poly.yv = poly.yv + poly.ya*dt/2
+            poly.rot = poly.rot + poly.rotv*dt
+            if poly.y > GROUND_H then
+                poly.y = GROUND_H
+                poly.grounded = true
+                poly.rot = 0
+                psys:start()
+                psys:emit(32)
+                sndSlide:play()
             end
         end
-        if p.x < -SIZE-PILLAR_SPACE then remove = i end
-    end
-    if remove then table.remove(pillars, remove) end
-    if deathPillar then
-        poly.x = deathPillar.x
+        if time >= timeNextPillar then
+            timeNextPillar = timeNextPillar + PILLAR_INTERVAL
+            newPillar()
+        end
+        local remove
+        for i,p in ipairs(pillars) do
+            p.x = p.x - PILLAR_SPEED*dt
+            if not deathPillar and not p.timeScored and ( p.x - PILLAR_SPEED*dt/2 <= poly.x ) then
+                if p.state == poly.state and ( ( p.height==1 and poly.grounded ) or ( p.height==2 and not poly.grounded) ) then
+                    p.timeScored = time
+                    time_pause_done = time + real_pause
+                    score = score + 1
+                    if score > hi_score then
+                        hi_score = score
+                        new_hi_score = true
+                    end
+                    sndScore[p.height]:play()
+                else
+                    gameState = 'over'
+                    deathPillar = p
+                    p.timeScored = time
+                    if new_hi_score then
+                        love.filesystem.write("polydata.lua", "hi_score="..hi_score)
+                    end
+                    time_pause_done = time + real_pause*2
+                    sndDeath:play()
+                end
+            end
+            if p.x < -SIZE-PILLAR_SPACE then remove = i end
+        end
+        if remove then table.remove(pillars, remove) end
+        if deathPillar then
+            poly.x = deathPillar.x
+        end
     end
 
     psys:update(dt)
@@ -184,6 +185,7 @@ function start()
     score = 0
     deathPillar = false
     real_pause = PAUSE/TIME_MULTIPLIER
+    time_pause_done = 0
 
     new_hi_score = false
 
