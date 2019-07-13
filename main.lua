@@ -65,6 +65,12 @@ function love.load()
         if not err then func() end
     end
 
+    for _,c in pairs(font) do
+        for k,lines in ipairs(c) do
+            c[k] = resize(lines, FONTSIZE)
+        end
+    end
+
     start()
 end
 
@@ -234,14 +240,13 @@ function jump()
     end
 end
 
-function printFont(text, x,y, size)
-    local size = size or FONTSIZE
+function printFont(text, x,y)
     love.graphics.push()
     love.graphics.translate(x,y)
     for c in text:gmatch('.') do
         if c ~= ' ' then
             for _,t in ipairs(font[c]) do
-                love.graphics.line( resize(t, size) )
+                love.graphics.line(t)
             end
         end
         love.graphics.translate(FONTSIZE*2.5,0)
