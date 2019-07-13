@@ -5,6 +5,7 @@ local font = require "font"
 function love.load()
     local LINE_WIDTH = 2
     love.graphics.setLineWidth(LINE_WIDTH)
+    love.graphics.setLineJoin('bevel')
 
     WINDOW_W, WINDOW_H = love.graphics.getDimensions()
     GROUND_H = WINDOW_H * 0.8
@@ -154,6 +155,9 @@ function love.draw()
     printFont(""..score, SCORE_X, SCORE_Y)
     love.graphics.setColor(1, 1, 1)
     printFont("hi "..hi_score, HISCORE_X, HISCORE_Y)
+    if deathPillar then
+        printFont("game over", WINDOW_W/2-FONTSIZE*12, SCORE_Y)
+    end
 
     for i,p in ipairs(pillars) do
         local front_end = p.x-PILLAR_SPACE
