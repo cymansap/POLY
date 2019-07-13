@@ -19,7 +19,7 @@ function love.load()
         {0,1,0, 1},
         {1,0,1, 1}
     }
-    PAUSE = 0.15
+    PAUSE = 0.08
     GRAVITY = WINDOW_H * 10
     JUMP_HEIGHT = WINDOW_H * 0.5
     JUMP_VEL = math.sqrt(2*GRAVITY*JUMP_HEIGHT)
@@ -31,7 +31,10 @@ function love.load()
     SCORE_Y = WINDOW_H * 0.82
     HISCORE_X = SCORE_X - FONTSIZE*7.5
     HISCORE_Y = SCORE_Y + FONTSIZE*3.5
-    TIME_MULTIPLIER = 1
+    TIME_MULTIPLIER = 0.5
+    TRI_CENTER = 2/3
+    SCORE_EFFECT_VEL = 12
+    SCORE_EFFECT_ACCEL = 32
 
     sndSwitch = love.audio.newSource("res/switch.wav", "static")
     sndJump = love.audio.newSource("res/jump.wav", "static")
@@ -108,11 +111,11 @@ function love.update(dt)
                         hi_score = score
                         new_hi_score = true
                     end
+                    p.scaleVel = SCORE_EFFECT_VEL
                     sndScore[p.height]:play()
                 else
                     gameState = 'over'
                     deathPillar = p
-                    p.timeScored = time
                     if new_hi_score then
                         love.filesystem.write("polydata.lua", "hi_score="..hi_score)
                     end
@@ -120,6 +123,7 @@ function love.update(dt)
                     sndDeath:play()
                 end
             end
+            if p.scaleVel then p.scaleVel = p.scaleVel - SCORE_EFFECT_ACCEL*dt end
             if p.x < -SIZE-PILLAR_SPACE then remove = i end
         end
         if remove then table.remove(pillars, remove) end
@@ -137,9 +141,10 @@ function love.draw()
 
     love.graphics.setColor(COLORS[poly.state])
     love.graphics.push()
-    love.graphics.translate(poly.x+SIZE/2, poly.y-SIZE/2)
+    local tri = poly.state==2 and TRI_CENTER or 1
+    love.graphics.translate(poly.x+SIZE/2, poly.y-SIZE/2*tri)
     love.graphics.rotate(poly.rot)
-    love.graphics.translate(-SIZE/2, SIZE/2)
+    love.graphics.translate(-SIZE/2, SIZE/2*tri)
     love.graphics.polygon("line", SHAPES[poly.state])
     love.graphics.pop()
 
@@ -157,7 +162,17 @@ function love.draw()
         love.graphics.line( back_end,0, back_end,GROUND_H)
         love.graphics.push()
         love.graphics.translate(p.x, p.y)
-        love.graphics.polygon('line', SHAPES[p.state])
+        if p.timeScored then
+            love.graphics.setColor(COLORS[p.state])
+            love.graphics.polygon('line', SHAPES[p.state])
+            local scale = (time - p.timeScored) * p.scaleVel
+            local centered = SIZE*scale/2
+            local tri = p.state==2 and TRI_CENTER or 1
+            love.graphics.translate(-centered, centered*tri)
+            love.graphics.polygon('line', resize(SHAPES[p.state], scale+1))
+        else
+            love.graphics.polygon('line', SHAPES[p.state])
+        end
         love.graphics.pop()
     end
 end
