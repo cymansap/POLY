@@ -1,12 +1,14 @@
 
 local ceil = math.ceil
-local font = require "font"
+local font_ref = require "font"
 
 function love.load()
     local LINE_WIDTH = 2
     love.graphics.setLineWidth(LINE_WIDTH)
     love.graphics.setLineJoin('bevel')
 
+    local os = love.system.getOS()
+    OS_MOBILE = os == "Android" or os == "iOS"
     WINDOW_W, WINDOW_H = love.graphics.getDimensions()
     GROUND_H = WINDOW_H * 0.8
     SIZE = WINDOW_H * 0.12
@@ -70,19 +72,26 @@ function love.load()
         if not err then func() end
     end
 
-    for _,c in pairs(font) do
-        for k,lines in ipairs(c) do
-            c[k] = resize(lines, FONTSIZE)
+    font = {}
+    font_title = {}
+    for k1,c in pairs(font_ref) do
+        for k2,lines in ipairs(c) do
+            if not font[k1] then font[k1] = {} end
+            if not font_title[k1] then font_title[k1] = {} end
+            font[k1][k2] = resize(lines, FONTSIZE)
+            font_title[k1][k2] = resize(lines, SIZE/2)
         end
     end
 
-    start()
+    title()
 end
 
 function love.update(dt)
     dt = dt*TIME_MULTIPLIER
     time = time + dt
-    if time_pause_done <= time then
+    if gameState == 'title' then
+        poly.rot = poly.rot + poly.rotv*dt
+    elseif time_pause_done <= time then
         if not poly.grounded then
             poly.yv = poly.yv + poly.ya*dt/2
             poly.y = poly.y + poly.yv*dt
@@ -159,6 +168,10 @@ function love.draw()
         printFont("game over", WINDOW_W/2-FONTSIZE*12, SCORE_Y)
     end
 
+    if gameState == 'title' then
+        printFont("p lysphere", POLY_X-SIZE, poly.y-SIZE, true)
+    end
+
     for i,p in ipairs(pillars) do
         local front_end = p.x-PILLAR_SPACE
         local back_end = p.x+SIZE+PILLAR_SPACE
@@ -189,21 +202,47 @@ function love.keypressed(key)
         elseif key=='d' then setState(2)
         elseif key=='f' then setState(3)
         end
+    elseif gameState == 'over' then
+        if key == 'space' then start() end
+    elseif gameState == 'title' then
+        if key=='space' then start()
+        elseif key=='s' then setState(1)
+        elseif key=='d' then setState(2)
+        elseif key=='f' then setState(3)
+        end
     end
     if key=='r' then start()
     elseif key=='escape' then love.event.quit()
     end
 end
 
-function start()
+function title()
+    gameState = 'title'
+    poly.y = GROUND_H - JUMP_HEIGHT
     poly.state = 1
     poly.x = POLY_X
-    poly.y = GROUND_H
-    poly.yv = 0
-    poly.grounded = true
     poly.rot = 0
-    poly.rotv = 0
-    psys:start()
+    poly.rotv = 3
+    poly.grounded = false
+    poly.ya = GRAVITY
+    pillars = {}
+    psys:stop()
+    score = 0
+    time = 0
+end
+
+function start()
+    if gameState ~= 'title' then
+        poly.state = 1
+        poly.x = POLY_X
+        poly.y = GROUND_H
+        poly.ya = GRAVITY
+        poly.grounded = true
+        poly.rot = 0
+        poly.rotv = 0
+        psys:start()
+    end
+    poly.yv = 0
 
     time = 0
     timeNextPillar = time + PILLAR_INTERVAL
@@ -260,16 +299,18 @@ function jump()
     end
 end
 
-function printFont(text, x,y)
+function printFont(text, x,y, title)
+    local f = title and font_title or font
+    local space = title and SIZE*1.25 or FONTSIZE*2.5
     love.graphics.push()
     love.graphics.translate(x,y)
     for c in text:gmatch('.') do
         if c ~= ' ' then
-            for _,t in ipairs(font[c]) do
+            for _,t in ipairs(f[c]) do
                 love.graphics.line(t)
             end
         end
-        love.graphics.translate(FONTSIZE*2.5,0)
+        love.graphics.translate(space,0)
     end
     love.graphics.pop()
 end
