@@ -25,7 +25,8 @@ function love.load()
         {0,1,0, 1},
         {1,0,1, 1}
     }
-    PAUSE = 0.08
+    PAUSE = 0
+    DIE_PAUSE = 0.2
     GRAVITY = WINDOW_H * 10
     JUMP_HEIGHT = WINDOW_H * 0.5
     JUMP_VEL = math.sqrt(2*GRAVITY*JUMP_HEIGHT)
@@ -133,7 +134,7 @@ function love.update(dt)
                     if new_hi_score then
                         love.filesystem.write("polydata.lua", "hi_score="..hi_score)
                     end
-                    time_pause_done = time + real_pause*2
+                    time_pause_done = time + DIE_PAUSE
                     sndDeath:play()
                 end
             end
@@ -151,6 +152,8 @@ end
 
 function love.draw()
     bloom.preDraw()
+
+    love.graphics.print("FPS: "..love.timer.getFPS(), 10,10)
 
     love.graphics.setColor(1,1,1)
     love.graphics.line(0,GROUND_H, WINDOW_W,GROUND_H)
