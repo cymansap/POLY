@@ -1,8 +1,11 @@
 
 local ceil = math.ceil
 local font_ref = require "font"
+local bloom
 
 function love.load()
+    bloom = require "bloom"
+
     local LINE_WIDTH = 2
     love.graphics.setLineWidth(LINE_WIDTH)
     love.graphics.setLineJoin('bevel')
@@ -147,6 +150,8 @@ function love.update(dt)
 end
 
 function love.draw()
+    bloom.preDraw()
+
     love.graphics.setColor(1,1,1)
     love.graphics.line(0,GROUND_H, WINDOW_W,GROUND_H)
 
@@ -193,6 +198,7 @@ function love.draw()
         end
         love.graphics.pop()
     end
+    bloom.postDraw()
 end
 
 function love.keypressed(key)

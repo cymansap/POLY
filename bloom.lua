@@ -1,0 +1,58 @@
+
+-- pretty much stolen from https://learnopengl.com/Advanced-Lighting/Bloom
+-- i can't figure out who wrote that though so uh thanks whoever
+
+local bloom = {}
+
+local blur = love.graphics.newShader [[
+float weight[5] = float[] (0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216);
+float size_x = 1 / love_ScreenSize.x;
+float size_y = 1 / love_ScreenSize.y;
+extern bool x;
+vec4 effect(vec4 color, Image tex, vec2 coords, vec2 _)
+{
+    vec3 c = Texel(tex, coords).rgb * weight[0];
+
+    if (x)
+    {
+        for (int i=0; i<5; ++i)
+        {
+            c += Texel(tex, coords + vec2(i*size_x, 0.0)).rgb * weight[i];
+            c += Texel(tex, coords - vec2(i*size_x, 0.0)).rgb * weight[i];
+        }
+    }
+    else
+    {
+        for (int i=0; i<5; ++i)
+        {
+            c += Texel(tex, coords + vec2(0.0, i*size_y)).rgb * weight[i];
+            c += Texel(tex, coords - vec2(0.0, i*size_y)).rgb * weight[i];
+        }
+    }
+
+    return vec4(c, 1.0) * color;
+}
+]]
+
+local can = love.graphics.newCanvas()
+local can_blury = love.graphics.newCanvas()
+
+function bloom.preDraw()
+    love.graphics.setCanvas(can)
+    love.graphics.clear()
+end
+
+function bloom.postDraw()
+    love.graphics.setCanvas(can_blury)
+    love.graphics.setShader(blur)
+    blur:send('x', true)
+    love.graphics.draw(can, 0,0)
+
+    love.graphics.setCanvas()
+    blur:send('x', false)
+    love.graphics.draw(can_blury, 0,0)
+
+    love.graphics.setShader()
+end
+
+return bloom
