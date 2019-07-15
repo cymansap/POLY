@@ -5,7 +5,7 @@
 local bloom = {}
 
 local blur = love.graphics.newShader [[
-float weight[5] = float[] (0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216);
+float weight[9] = float[] (0.13298,0.125858,0.106701,0.081029,0.055119,0.033585,0.018331,0.008962,0.003924);
 float size_x = 1 / love_ScreenSize.x;
 float size_y = 1 / love_ScreenSize.y;
 extern bool x;
@@ -15,7 +15,7 @@ vec4 effect(vec4 color, Image tex, vec2 coords, vec2 _)
 
     if (x)
     {
-        for (int i=0; i<5; ++i)
+        for (int i=0; i<9; ++i)
         {
             c += Texel(tex, coords + vec2(i*size_x, 0.0)).rgb * weight[i];
             c += Texel(tex, coords - vec2(i*size_x, 0.0)).rgb * weight[i];
@@ -23,7 +23,7 @@ vec4 effect(vec4 color, Image tex, vec2 coords, vec2 _)
     }
     else
     {
-        for (int i=0; i<5; ++i)
+        for (int i=0; i<9; ++i)
         {
             c += Texel(tex, coords + vec2(0.0, i*size_y)).rgb * weight[i];
             c += Texel(tex, coords - vec2(0.0, i*size_y)).rgb * weight[i];
@@ -53,6 +53,7 @@ function bloom.postDraw()
     love.graphics.draw(can_blury, 0,0)
 
     love.graphics.setShader()
+    love.graphics.draw(can, 0,0)
 end
 
 return bloom
