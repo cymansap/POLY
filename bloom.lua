@@ -46,6 +46,7 @@ function bloom.postDraw()
     love.graphics.setCanvas(can_blury)
     love.graphics.setShader(blur)
     blur:send('x', true)
+    love.graphics.setColor(1,1,1)
     love.graphics.draw(can, 0,0)
 
     love.graphics.setCanvas()
