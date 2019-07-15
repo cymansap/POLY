@@ -64,10 +64,19 @@ function love.load()
     local spread = 0.5
     psys:setDirection(math.pi + spread/2)
     psys:setSpread(spread) -- 1 radian
-    psys:setSpeed(PILLAR_SPEED*0.4,PILLAR_SPEED*0.6)
+    psys:setSpeed(PILLAR_SPEED*0.6,PILLAR_SPEED*0.8)
     psys:setEmissionRate(64)
     psys:setParticleLifetime(0.4,0.6)
     psys:setColors(1,1,1,1, 1,1,1,0)
+    psys:setLinearDamping(3,6)
+
+    s_sys = love.graphics.newParticleSystem(imgParticle, 64)
+    s_sys:setSpread(math.pi*2)
+    s_sys:setSpeed(PILLAR_SPEED*0.3,PILLAR_SPEED*0.8)
+    s_sys:setParticleLifetime(0.4,0.8)
+    s_sys:setColors(1,1,1,1, 1,1,1,0)
+    s_sys:setLinearDamping(8,12)
+    s_sys_y = GROUND_H - SIZE/2
 
     hi_score = 0
     local info = love.filesystem.getInfo("polydata.lua")
@@ -128,6 +137,8 @@ function love.update(dt)
                     end
                     p.scaleVel = SCORE_EFFECT_VEL
                     sndScore[p.height]:play()
+                    s_sys_y = p.y - SIZE/2
+                    s_sys:emit(64)
                 else
                     gameState = 'over'
                     deathPillar = p
@@ -148,6 +159,7 @@ function love.update(dt)
     end
 
     psys:update(dt)
+    s_sys:update(dt)
 end
 
 function love.draw()
@@ -194,6 +206,7 @@ function love.draw()
             local scale = (time - p.timeScored) * p.scaleVel
             local centered = SIZE*scale/2
             local tri = p.state==2 and TRI_CENTER or 1
+            love.graphics.draw(s_sys, poly.x-p.x+SIZE/2,-SIZE/2*tri)
             love.graphics.translate(-centered, centered*tri)
             love.graphics.polygon('line', resize(SHAPES[p.state], scale+1))
         else
