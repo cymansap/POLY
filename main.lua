@@ -96,10 +96,10 @@ function love.load()
         end
     end
 
-    title()
+    require "intro"
 end
 
-function love.update(dt)
+function update(dt)
     dt = dt*TIME_MULTIPLIER
     time = time + dt
     if gameState == 'title' then
@@ -162,7 +162,7 @@ function love.update(dt)
     s_sys:update(dt)
 end
 
-function love.draw()
+function draw()
     bloom.preDraw()
 
     love.graphics.print("FPS: "..love.timer.getFPS(), 10,10)
@@ -235,6 +235,7 @@ function love.keypressed(key)
     end
     if key=='r' then start()
     elseif key=='escape' then love.event.quit()
+    elseif key=='6' then love.event.quit('restart')
     end
 end
 
