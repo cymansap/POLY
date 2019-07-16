@@ -52,6 +52,9 @@ function love.load()
         love.audio.newSource("res/score1.ogg", "static"),
         love.audio.newSource("res/score2.ogg", "static")
     }
+    musHoles = love.audio.newSource("res/holes.xm", "stream")
+    musHoles:setLooping(true)
+    musicDelay = 1.5
 
     poly = {}
 
@@ -105,6 +108,9 @@ function update(dt)
     if gameState == 'title' then
         poly.rot = poly.rot + poly.rotv*dt
     elseif time_pause_done <= time then
+        if time > musicDelay and not deathPillar then
+            musHoles:play()
+        end
         if not poly.grounded then
             poly.yv = poly.yv + poly.ya*dt/2
             poly.y = poly.y + poly.yv*dt
@@ -146,6 +152,7 @@ function update(dt)
                         love.filesystem.write("polydata.lua", "hi_score="..hi_score)
                     end
                     time_pause_done = time + DIE_PAUSE
+                    musHoles:stop()
                     sndDeath:play()
                 end
             end
