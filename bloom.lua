@@ -4,6 +4,8 @@
 
 local bloom = {}
 
+if not OS_MOBILE then
+
 local blur = love.graphics.newShader [[
 float weight[9] = float[] (0.13298,0.125858,0.106701,0.081029,0.055119,0.033585,0.018331,0.008962,0.003924);
 float size_x = 1 / love_ScreenSize.x;
@@ -55,6 +57,13 @@ function bloom.postDraw()
 
     love.graphics.setShader()
     love.graphics.draw(can, 0,0)
+end
+
+else -- if OS_MOBILE
+
+function bloom.preDraw() end
+function bloom.postDraw() end
+
 end
 
 return bloom

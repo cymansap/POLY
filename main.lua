@@ -4,7 +4,7 @@ local font_ref = require "font"
 local bloom
 
 function love.load()
-    bloom = require "bloom"
+    love.audio.setVolume(0.5)
 
     local LINE_WIDTH = 2
     love.graphics.setLineWidth(LINE_WIDTH)
@@ -12,6 +12,7 @@ function love.load()
 
     local os = love.system.getOS()
     OS_MOBILE = os == "Android" or os == "iOS"
+    bloom = require "bloom"
     WINDOW_W, WINDOW_H = love.graphics.getDimensions()
     GROUND_H = WINDOW_H * 0.8
     SIZE = WINDOW_H * 0.12
@@ -148,6 +149,7 @@ function update(dt)
                 else
                     gameState = 'over'
                     deathPillar = p
+                    deathTime = time
                     if new_hi_score then
                         love.filesystem.write("polydata.lua", "hi_score="..hi_score)
                     end
@@ -221,6 +223,21 @@ function draw()
         end
         love.graphics.pop()
     end
+
+    if OS_MOBILE then
+        love.graphics.push()
+        love.graphics.translate(SIZE/2,SIZE*1.5)
+        for i=1,3 do
+            if poly.state == i then
+                love.graphics.setColor(COLORS[poly.state])
+            else
+                love.graphics.setColor(1,1,1)
+            end
+            love.graphics.polygon('line', SHAPES[i])
+            love.graphics.translate(0,GROUND_H*0.333)
+        end
+        love.graphics.pop()
+    end
     bloom.postDraw()
 end
 
@@ -243,6 +260,24 @@ function love.keypressed(key)
     if key=='r' then start()
     elseif key=='escape' then love.event.quit()
     elseif key=='6' then love.event.quit('restart')
+    end
+end
+
+function love.touchpressed(id, x, y)
+    if gameState == 'main' then
+        if x > WINDOW_W/2 then jump()
+        elseif y < GROUND_H*0.333 then setState(1)
+        elseif y < GROUND_H*0.666 then setState(2)
+        elseif y < GROUND_H then setState(3)
+        end
+    elseif gameState == 'over' then
+        if time-deathTime > 0.2 then start() end
+    elseif gameState == 'title' then
+        if x > WINDOW_W/2 then start()
+        elseif y < GROUND_H*0.333 then setState(1)
+        elseif y < GROUND_H*0.666 then setState(2)
+        elseif y < GROUND_H then setState(3)
+        end
     end
 end
 
