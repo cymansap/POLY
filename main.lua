@@ -104,6 +104,7 @@ function love.load()
 end
 
 function update(dt)
+    if dt > 0.1 then dt = 0 end
     dt = dt*TIME_MULTIPLIER
     time = time + dt
     if gameState == 'title' then
