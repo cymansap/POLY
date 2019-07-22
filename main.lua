@@ -199,7 +199,7 @@ function draw()
     end
 
     if gameState == 'title' then
-        printFont("p lysphere", POLY_X-SIZE, poly.y-SIZE, true)
+        printFont("p lygon", POLY_X-SIZE, poly.y-SIZE, true)
     end
 
     for i,p in ipairs(pillars) do
