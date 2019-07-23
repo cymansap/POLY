@@ -40,7 +40,6 @@ function love.load()
     SCORE_Y = WINDOW_H * 0.82
     HISCORE_X = SCORE_X - FONTSIZE*7.5
     HISCORE_Y = SCORE_Y + FONTSIZE*3.5
-    TIME_MULTIPLIER = 1
     TRI_CENTER = 2/3
     SCORE_EFFECT_VEL = 12
     SCORE_EFFECT_ACCEL = 32
@@ -53,11 +52,9 @@ function love.load()
         love.audio.newSource("res/score1.ogg", "static"),
         love.audio.newSource("res/score2.ogg", "static")
     }
-    musHoles = love.audio.newSource("res/holes.xm", "stream")
-    musHoles:setLooping(true)
-    musicDelay = 1.5
 
     poly = {}
+    time_multiplier = 1
 
     local imgParticle = love.graphics.newCanvas(LINE_WIDTH, LINE_WIDTH)
     love.graphics.setCanvas(imgParticle)
@@ -105,13 +102,13 @@ end
 
 function update(dt)
     if dt > 0.1 then dt = 0 end
-    dt = dt*TIME_MULTIPLIER
+    dt = dt*time_multiplier
     time = time + dt
     if gameState == 'title' then
         poly.rot = poly.rot + poly.rotv*dt
     elseif time_pause_done <= time then
         if time > musicDelay and not deathPillar then
-            musHoles:play()
+            music:play()
         end
         if not poly.grounded then
             poly.yv = poly.yv + poly.ya*dt/2
@@ -127,14 +124,14 @@ function update(dt)
                 sndSlide:play()
             end
         end
-        if time >= timeNextPillar then
+        if time >= timeNextPillar and score ~= next_level_score then
             timeNextPillar = timeNextPillar + PILLAR_INTERVAL
             newPillar()
         end
         local remove
         for i,p in ipairs(pillars) do
-            p.x = p.x - PILLAR_SPEED*dt
-            if not deathPillar and not p.timeScored and ( p.x - PILLAR_SPEED*dt/2 <= poly.x ) then
+            p.x = p.x - speed*dt
+            if not deathPillar and not p.timeScored and ( p.x - speed*dt/2 <= poly.x ) then
                 if p.state == poly.state and ( ( p.height==1 and poly.grounded ) or ( p.height==2 and not poly.grounded) ) then
                     p.timeScored = time
                     time_pause_done = time + real_pause
@@ -155,7 +152,7 @@ function update(dt)
                         love.filesystem.write("polydata.lua", "hi_score="..hi_score)
                     end
                     time_pause_done = time + DIE_PAUSE
-                    musHoles:stop()
+                    music:stop()
                     sndDeath:play()
                 end
             end
@@ -166,6 +163,10 @@ function update(dt)
         if deathPillar then
             poly.x = deathPillar.x
         end
+    end
+
+    if score == next_level_score then
+        nextLevel()
     end
 
     psys:update(dt)
@@ -200,6 +201,8 @@ function draw()
 
     if gameState == 'title' then
         printFont("p lygon", POLY_X-SIZE, poly.y-SIZE, true)
+    elseif gameState == 'main' and time < time_multiplier then
+        printFont("level "..current_level, WINDOW_W/2-FONTSIZE*10, SCORE_Y)
     end
 
     for i,p in ipairs(pillars) do
@@ -315,8 +318,10 @@ function start()
     gameState = 'main'
     score = 0
     deathPillar = false
-    real_pause = PAUSE/TIME_MULTIPLIER
+    real_pause = PAUSE/time_multiplier
     time_pause_done = 0
+    current_level = 1
+    level[1]()
 
     new_hi_score = false
 
@@ -351,7 +356,7 @@ function jump()
             poly.ya = GRAVITY
         else
             local p = pillars[1].x < poly.x and pillars[2] or pillars[1]
-            local t = (p.x-poly.x)/PILLAR_SPEED
+            local t = (p.x-poly.x)/speed
             poly.ya = (-2*(JUMP_HEIGHT-JUMP_VEL*t))/t^2
             poly.rotv = p.state==2 and math.pi*2/t or math.pi/t
         end
@@ -364,6 +369,32 @@ function jump()
         sndJump:play()
     end
 end
+
+function nextLevel()
+    current_level = current_level + 1
+    level[current_level]()
+    time_pause_done = time_pause_done - time - time_multiplier
+    time = - time_multiplier
+    timeNextPillar = PILLAR_INTERVAL
+end
+
+level = {
+    function ()
+        music = love.audio.newSource("res/holes.xm", "stream")
+        musicDelay = 1.5
+        time_multiplier = 1
+        next_level_score = 41
+        speed = PILLAR_SPEED
+    end,
+    function ()
+        music:stop()
+        music = love.audio.newSource("res/pillars.xm", "stream")
+        musicDelay = 2.5
+        time_multiplier = 1.5
+        next_level_score = math.huge
+        speed = PILLAR_SPEED / 1.5
+    end
+}
 
 function printFont(text, x,y, title)
     local f = title and font_title or font
