@@ -7,7 +7,7 @@ local bloom = {}
 if not OS_MOBILE then
 
 local blur = love.graphics.newShader [[
-float weight[9] = float[] (0.13298,0.125858,0.106701,0.081029,0.055119,0.033585,0.018331,0.008962,0.003924);
+float weight[6] = float[] (0.13298,0.125858,0.106701,0.081029,0.055119,0.033585);
 float size_x = 1 / love_ScreenSize.x;
 float size_y = 1 / love_ScreenSize.y;
 extern bool x;
@@ -17,7 +17,7 @@ vec4 effect(vec4 color, Image tex, vec2 coords, vec2 _)
 
     if (x)
     {
-        for (int i=0; i<9; ++i)
+        for (int i=0; i<6; ++i)
         {
             c += Texel(tex, coords + vec2(i*size_x, 0.0)).rgb * weight[i];
             c += Texel(tex, coords - vec2(i*size_x, 0.0)).rgb * weight[i];
@@ -25,7 +25,7 @@ vec4 effect(vec4 color, Image tex, vec2 coords, vec2 _)
     }
     else
     {
-        for (int i=0; i<9; ++i)
+        for (int i=0; i<6; ++i)
         {
             c += Texel(tex, coords + vec2(0.0, i*size_y)).rgb * weight[i];
             c += Texel(tex, coords - vec2(0.0, i*size_y)).rgb * weight[i];
