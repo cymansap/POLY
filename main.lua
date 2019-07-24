@@ -80,10 +80,11 @@ function love.load()
     s_sys_y = GROUND_H - SIZE/2
 
     hi_score = 0
-    local info = love.filesystem.getInfo("polydata.lua")
+    local info = love.filesystem.getInfo("poly.data")
     if info then
-        local func, err = love.filesystem.load("polydata.lua")
-        if not err then func() end
+        local data = love.filesystem.read("poly.data")
+        local num = tonumber(data)
+        if num then hi_score = num end
     end
 
     font = {}
@@ -149,7 +150,7 @@ function update(dt)
                     deathPillar = p
                     deathTime = time
                     if new_hi_score then
-                        love.filesystem.write("polydata.lua", "hi_score="..hi_score)
+                        love.filesystem.write("poly.data", ""..hi_score)
                     end
                     time_pause_done = time + DIE_PAUSE
                     music:stop()
