@@ -4,7 +4,7 @@ local font_ref = require "font"
 local bloom
 
 function love.load()
-    love.audio.setVolume(0.5)
+    love.audio.setVolume(0)
 
     local LINE_WIDTH = 2
     love.graphics.setLineWidth(LINE_WIDTH)
@@ -132,7 +132,7 @@ function update(dt)
         for i,p in ipairs(pillars) do
             p.x = p.x - speed*dt
             if not deathPillar and not p.timeScored and ( p.x - speed*dt/2 <= poly.x ) then
-                if p.state == poly.state and ( ( p.height==1 and poly.grounded ) or ( p.height==2 and not poly.grounded) ) then
+                if p.state == poly.state and ( ( p.height==1 and poly.grounded ) or ( p.height==2 and not poly.grounde and poly.will_score ) ) then
                     p.timeScored = time
                     time_pause_done = time + real_pause
                     score = score + 1
@@ -312,6 +312,7 @@ function start()
         psys:start()
     end
     poly.yv = 0
+    poly.will_score = true
 
     time = 0
     timeNextPillar = time + PILLAR_INTERVAL
@@ -358,6 +359,10 @@ function jump()
             local p = pillars[1].x < poly.x and pillars[2] or pillars[1]
             local t = (p.x-poly.x)/speed
             poly.ya = (-2*(JUMP_HEIGHT-JUMP_VEL*t))/t^2
+            if poly.ya < GRAVITY*0.3 then
+                 poly.ya = GRAVITY*0.3
+                 poly.will_score = false
+            end
             poly.rotv = p.state==2 and math.pi*2/t or math.pi/t
         end
         poly.yv = -JUMP_VEL
