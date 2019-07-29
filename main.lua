@@ -4,7 +4,7 @@ local font_ref = require "font"
 local bloom
 
 function love.load()
-    love.audio.setVolume(0)
+    love.audio.setVolume(0.5)
 
     local LINE_WIDTH = 2
     love.graphics.setLineWidth(LINE_WIDTH)
@@ -125,7 +125,7 @@ function update(dt)
                 sndSlide:play()
             end
         end
-        if time >= timeNextPillar and score ~= next_level_score then
+        if time >= timeNextPillar and pillar_count < next_level_score then
             timeNextPillar = timeNextPillar + PILLAR_INTERVAL
             newPillar()
         end
@@ -133,7 +133,8 @@ function update(dt)
         for i,p in ipairs(pillars) do
             p.x = p.x - speed*dt
             if not deathPillar and not p.timeScored and ( p.x - speed*dt/2 <= poly.x ) then
-                if p.state == poly.state and ( ( p.height==1 and poly.grounded ) or ( p.height==2 and not poly.grounde and poly.will_score ) ) then
+                --if p.state == poly.state and ( ( p.height==1 and poly.grounded ) or ( p.height==2 and not poly.grounde and poly.will_score ) ) then
+                if true then
                     p.timeScored = time
                     time_pause_done = time + real_pause
                     score = score + 1
@@ -320,6 +321,7 @@ function start()
     gameState = 'main'
     score = 0
     deathPillar = false
+    pillar_count = 0
     real_pause = PAUSE/time_multiplier
     time_pause_done = 0
     current_level = 1
@@ -341,6 +343,7 @@ function newPillar()
         timeScored = false
     }
     pillars[#pillars+1] = p
+    pillar_count = pillar_count + 1
 end
 
 function setState(state)
@@ -393,12 +396,24 @@ level = {
         speed = PILLAR_SPEED
     end,
     function ()
-        music:stop()
+        music = love.audio.newSource("res/shapes.xm", "stream")
+        musicDelay = 2.25
+        time_multiplier = 1.25
+        next_level_score = 122
+        speed = PILLAR_SPEED / 1.25
+    end,
+    function ()
         music = love.audio.newSource("res/pillars.xm", "stream")
         musicDelay = 2.5
         time_multiplier = 1.5
-        next_level_score = math.huge
+        next_level_score = 283
         speed = PILLAR_SPEED / 1.5
+    end,
+    function ()
+        music = love.audio.newSource("res/polygon.xm", "stream")
+        musicDelay = 2.5
+        time_multiplier = 2
+        next_level_score = math.huge
     end
 }
 
