@@ -133,7 +133,7 @@ function update(dt)
         for i,p in ipairs(pillars) do
             p.x = p.x - speed*dt
             if not deathPillar and not p.timeScored and ( p.x - speed*dt/2 <= poly.x ) then
-                if p.state == poly.state and ( ( p.height==1 and poly.grounded ) or ( p.height==2 and not poly.ground and poly.will_score ) ) then
+                if p.state == poly.state and ( ( p.height==1 and poly.grounded ) or ( p.height==2 and not poly.grounded and poly.will_score ) ) then
                     p.timeScored = time
                     time_pause_done = time + real_pause
                     score = score + 1
@@ -176,8 +176,6 @@ end
 
 function draw()
     bloom.preDraw()
-
-    love.graphics.print("FPS: "..love.timer.getFPS(), 10,10)
 
     love.graphics.setColor(1,1,1)
     love.graphics.line(0,GROUND_H, WINDOW_W,GROUND_H)
