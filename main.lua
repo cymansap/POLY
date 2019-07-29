@@ -133,8 +133,7 @@ function update(dt)
         for i,p in ipairs(pillars) do
             p.x = p.x - speed*dt
             if not deathPillar and not p.timeScored and ( p.x - speed*dt/2 <= poly.x ) then
-                --if p.state == poly.state and ( ( p.height==1 and poly.grounded ) or ( p.height==2 and not poly.grounde and poly.will_score ) ) then
-                if true then
+                if p.state == poly.state and ( ( p.height==1 and poly.grounded ) or ( p.height==2 and not poly.ground and poly.will_score ) ) then
                     p.timeScored = time
                     time_pause_done = time + real_pause
                     score = score + 1
@@ -383,6 +382,7 @@ function nextLevel()
     current_level = current_level + 1
     level[current_level]()
     time_pause_done = time_pause_done - time - time_multiplier
+    pillars[1].timeScored = pillars[1].timeScored - time - time_multiplier
     time = - time_multiplier
     timeNextPillar = PILLAR_INTERVAL
 end
